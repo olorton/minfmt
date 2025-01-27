@@ -1,32 +1,39 @@
-package formatter
+package main
 
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 )
 
-// TODO list
-// - Read file/dir as argument
-// - Iterate over all sub dirs and files if a directory
-// - If null byte, this is a binary file, so cancel
+var ErrNullByte = errors.New("Null byte found, cannot format a binary file")
 
 const NullByte = byte(0x00)
 const ByteNewLine = byte(0x0A)
-const CharTab = string(0x09)
-const CharSpace = string(0x20)
+const ByteTab = byte(0x09)
+const ByteSpace = byte(0x20)
+const CharTab = string(rune(0x09))
+const CharSpace = string(rune(0x20))
 
-func Format() {
-	src_path := getFullPath()
-	buffer_output := CleanBuffer(getInputBuffer(src_path))
+// TODO refactor this, handle all sorts of errors.
+func FormatFile(path string) {
+	src_path := getFullPath(path)
+	buffer_output, err := CleanBuffer(getInputBuffer(src_path))
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
 	writeFile(buffer_output, src_path)
 }
 
-func CleanBuffer(buffer_input []byte) (buffer_output []byte) {
+// TODO also return a bool so that when a buffer is unchanged, we don't have to write to the new file
+func CleanBuffer(buffer_input []byte) ([]byte, error) {
 	var b byte
+	var buffer_output []byte
 	for {
 		line := []byte{}
 		// loop over the buffer_output to create a line, stop at ByteNewLine
@@ -39,7 +46,7 @@ func CleanBuffer(buffer_input []byte) (buffer_output []byte) {
 				break
 			}
 			if b == NullByte {
-				os.Exit(0)
+				return nil, ErrNullByte
 			}
 			line = append(line, b)
 		}
@@ -55,7 +62,7 @@ func CleanBuffer(buffer_input []byte) (buffer_output []byte) {
 		buffer_output[len(buffer_output)-2] == ByteNewLine {
 		buffer_output = buffer_output[:len(buffer_output)-1]
 	}
-	return
+	return buffer_output, nil
 }
 func writeFile(buffer_output []byte, src_path string) {
 	// Open the file for writing
@@ -100,8 +107,7 @@ func getInputBuffer(src_path string) []byte {
 	return buffer_input
 }
 
-func getFullPath() string {
-	filename := os.Args[1]
+func getFullPath(filename string) string {
 	regexForTilde := regexp.MustCompile(`^~`)
 	m, err := regexp.MatchString("^~", filename)
 	if m {
