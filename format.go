@@ -34,6 +34,9 @@ func FormatFile(path string) {
 func CleanBuffer(buffer_input []byte) ([]byte, error) {
 	var b byte
 	var buffer_output []byte
+	if len(buffer_input) == 0 {
+		return buffer_output, nil
+	}
 	for {
 		line := []byte{}
 		// loop over the buffer_output to create a line, stop at ByteNewLine
@@ -58,12 +61,22 @@ func CleanBuffer(buffer_input []byte) ([]byte, error) {
 			break
 		}
 	}
-	for buffer_output[len(buffer_output)-1] == ByteNewLine &&
-		buffer_output[len(buffer_output)-2] == ByteNewLine {
-		buffer_output = buffer_output[:len(buffer_output)-1]
+	if len(buffer_output) > 1 {
+		// Remove trailing newlines from the output buffer if there are multiple
+		// consecutive newlines
+		for buffer_output[len(buffer_output)-1] == ByteNewLine &&
+			buffer_output[len(buffer_output)-2] == ByteNewLine {
+			buffer_output = buffer_output[:len(buffer_output)-1]
+		}
+	}
+	if len(buffer_output) == 1 {
+		// We should not ever return simply a single byte. Either there is a
+		// non-line-break byte followed by a new-line, or it should be empty.
+		return []byte{}, nil
 	}
 	return buffer_output, nil
 }
+
 func writeFile(buffer_output []byte, src_path string) {
 	// Open the file for writing
 	file_tmp, err := os.Create(src_path + "~")
