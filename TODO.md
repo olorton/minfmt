@@ -1,7 +1,7 @@
 # TODOs
 
+- Should be able to pass (or read from stdin) a list of files, e.g. list of VCS staged files, and format just those
 - Turn this list into github issues
-- Should be able to pass a list of files, e.g. list of VCS staged files, and format just those
 - When writing the file, we should not change permissions! (maybe creating a tmp file in the same location is not great, could use /tmp instead)
 - Windows support
 - Although this should be a silent cli tool, add an option to give a verdict on how many files have changed, and list them.
